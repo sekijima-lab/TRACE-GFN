@@ -1,0 +1,1 @@
+Training outputs are saved here as {PROTEIN_NAME}_reactions_{TIMESTAMP}
