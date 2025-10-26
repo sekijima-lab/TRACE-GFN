@@ -67,7 +67,7 @@ python -u src/gflownet/tasks/qsar_reactions.py \
 |----------|-------------|---------|
 | `--protein_name` | Target protein: "DRD2", "AKT1", or "CXCR4" | Required |
 | `--init_compound_idx` | Index of starting material | Required |
-| `--condition` | Temperature parameter (higher = more exploration) | 16.0 |
+| `--condition` | Temperature parameter (higher = more exploitation) | 16.0 |
 | `--max_depth` | Maximum number of reaction steps | 5 |
 
 ### Starting Materials
