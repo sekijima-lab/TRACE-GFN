@@ -13,10 +13,9 @@ wandb/
 *__pycache__
 
 # checkpoints
-*Transformer.pth
-*ckpts
-!src/gflownet/models/ckpts/GCN/GCN.pth
-!src/gflownet/models/ckpts/Transformer/README.md
+src/gflownet/models/ckpts/Transformer/Transformer.pth
+src/gflownet/models/GCN/ckpts/*
+
 
 # test files
 test.*
