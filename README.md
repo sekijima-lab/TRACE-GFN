@@ -5,7 +5,7 @@
 
 ## Installation
 
-“The implementation was tested and confirmed to run on an Ubuntu operating system with Python 3.11 and CUDA version 12.1.”
+The implementation was tested and confirmed to run on an Ubuntu operating system with Python 3.11 and CUDA version 12.1.
 
 ### Quick Install
 
