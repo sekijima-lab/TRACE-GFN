@@ -190,7 +190,6 @@ TRACE-GFN/
 │   ├── online_trainer.py           # Online training implementation
 │   └── config.py                   # Configuration dataclasses
 ├── install.sh                      # Installation script
-├── run.sh                          # Example run script
 └── pyproject.toml                  # Dependencies
 ```
 
