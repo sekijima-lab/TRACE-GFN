@@ -91,8 +91,8 @@ You can create custom starting materials by adding new `.smi` files with your de
 python -u src/gflownet/tasks/qsar_reactions.py \
   --protein_name "DRD2" \
   --init_compound_idx 1 \
-  --condition 32.0 \
-  --max_depth 7
+  --condition 16.0 \
+  --max_depth 5
 ```
 
 **AKT1 optimization with conservative exploration:**
@@ -110,7 +110,7 @@ python -u src/gflownet/tasks/qsar_reactions.py \
   --protein_name "CXCR4" \
   --init_compound_idx 11 \
   --condition 16.0 \
-  --max_depth 6 \
+  --max_depth 5 \
 ```
 
 ## Output
