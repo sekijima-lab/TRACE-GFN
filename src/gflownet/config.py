@@ -6,7 +6,7 @@ from omegaconf import MISSING
 from gflownet.algo.config import AlgoConfig
 from gflownet.data.config import DataConfig, ReplayConfig
 from gflownet.models.config import ModelConfig
-# from gflownet.tasks.config import TasksConfig
+from gflownet.tasks.config import TaskConfig
 from gflownet.utils.config import ConditionalsConfig
 
 
@@ -83,10 +83,7 @@ class Config:
     """
 
     protein_name: str = 'DRD2' # DRD2, AKT1, CXCR4
-    reward: str = 'QSAR' # 'QSAR' or 'DOCK'
-    # mp: str = '1'
-    # train_gpu: str = '1'
-    # dock_gpu: str = '2'
+    reward: str = 'QSAR'
     log_dir: str = './logs'
     device: str = "cuda"
     seed: int = 0
@@ -106,5 +103,5 @@ class Config:
     opt: OptimizerConfig = field(default_factory=OptimizerConfig)
     replay: ReplayConfig = field(default_factory=ReplayConfig)
     data: DataConfig = field(default_factory=DataConfig)
-    # task: TasksConfig = TasksConfig()
+    task: TaskConfig = field(default_factory=TaskConfig)
     cond: ConditionalsConfig = field(default_factory=ConditionalsConfig)

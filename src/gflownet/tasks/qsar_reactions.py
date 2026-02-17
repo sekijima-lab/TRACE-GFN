@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 import socket
 from typing import Callable, Dict, List, Tuple, Union
@@ -14,6 +15,10 @@ from rdkit import Chem
 import rdkit.Chem.AllChem as AllChem
 from rdkit.Chem.rdchem import Mol as RDMol
 from torch import Tensor
+
+from rdkit.Chem import RDConfig
+sys.path.append(os.path.join(RDConfig.RDContribDir, "SA_Score"))
+import sascorer
 
 from gflownet.config import Config
 from gflownet.online_trainer import StandardOnlineTrainer
@@ -49,7 +54,9 @@ class QSAR_ReactionTask(GFNTask):
         self.models = self._load_task_models()
         self.temperature_conditional = TemperatureConditional(cfg, rng)
         self.num_cond_dim = self.temperature_conditional.encoding_size() # default: 32, num_cond_dimと一致している必要がある？
-
+        if self.cfg.task.add_sa_score:
+            print('Adding SA score to reward with coefficient', self.cfg.task.sa_score_coeff)
+        
     def flat_reward_transform(self, y: Union[float, Tensor]) -> FlatRewards:
         # return FlatRewards(torch.as_tensor(y) / 8)
         return FlatRewards(torch.as_tensor(y))
@@ -88,6 +95,14 @@ class QSAR_ReactionTask(GFNTask):
         scores = FlatRewards(torch.as_tensor(scores)).reshape((-1, 1))
         return scores
     
+    def scale_sa_score(self, sa_scores: Tensor) -> Tensor:
+        """
+        Scales the SA (synthetic accessibility) scores to a range between 0 and 1.
+        """
+        sa_scores = (self.cfg.task.sa_max - sa_scores) / (self.cfg.task.sa_max - self.cfg.task.sa_min)
+        sa_scores = sa_scores.clip(0, 1)
+        return sa_scores
+    
     def compute_flat_rewards(self, mols: List[RDMol]) -> Tuple[FlatRewards, Tensor]:
         is_valid = torch.tensor([m is not None for m in mols]).bool() 
 
@@ -109,6 +124,16 @@ class QSAR_ReactionTask(GFNTask):
             y_pred[None_idx] = 0
         y_pred = torch.tensor(y_pred)
         preds = self.flat_reward_transform(y_pred).clip(1e-4, 1).reshape((-1, 1))
+        
+        if self.cfg.task.add_sa_score:
+            sa_scores = []
+            for mol in mols:
+                if mol is not None:
+                    sa_score = sascorer.calculateScore(mol)
+                sa_scores.append(sa_score)
+            sa_scores = torch.tensor(sa_scores).reshape((-1, 1))
+            sa_scores = self.scale_sa_score(sa_scores)
+            preds += self.cfg.task.sa_score_coeff * self.flat_reward_transform(sa_scores)
         return FlatRewards(preds), is_valid
 
 class QSAR_ReactionTrainer(StandardOnlineTrainer):
