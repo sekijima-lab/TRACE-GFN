@@ -34,7 +34,12 @@ If you don't have CUDA available, modify the PyTorch installation in `pyproject.
 
 ## Download Model Parameters
 
-Please download trained weights for the Transformer from [Figshare here](https://figshare.com/articles/software/Weights_of_conditional_unconditional_Transformer/25853551), and place the weights as `Transformer.pth` in the `src/gflownet/models/ckpts/Transformer/` directory.
+Please download trained weights for the Transformer from [Figshare here](https://figshare.com/articles/software/Weights_of_conditional_unconditional_Transformer/25853551), and place the weights as `Transformer.pth` in the `src/gflownet/models/ckpts/Transformer/` directory. You can use the following command to download the weights directly:
+
+```
+wget -O src/gflownet/models/ckpts/Transformer/Transformer.pth https://ndownloader.figshare.com/files/46402633
+
+```
 
 Then, the directory substructure is as follows:
 
