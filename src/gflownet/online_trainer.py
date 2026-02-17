@@ -1,6 +1,9 @@
 import copy
 import os
 import pathlib
+import pickle
+import sys
+import types
 
 import git
 import torch
@@ -17,6 +20,33 @@ from gflownet.models.GCN import network
 from gflownet.models.mlp import MLP
 
 from gflownet.models.Transformer.preprocess import make_counter, make_transforms
+
+# Collect all config classes from the current codebase for checkpoint compatibility
+import gflownet.config as _cfg_main
+import gflownet.models.config as _cfg_models
+import gflownet.data.config as _cfg_data
+import gflownet.algo.config as _cfg_algo
+import gflownet.tasks.config as _cfg_tasks
+import gflownet.utils.config as _cfg_utils
+
+_CONFIG_MODULES = [_cfg_main, _cfg_models, _cfg_data, _cfg_algo, _cfg_tasks, _cfg_utils]
+
+
+class _CompatPickle:
+    """Pickle module wrapper that handles checkpoints saved with old module paths."""
+
+    class Unpickler(pickle.Unpickler):
+        def find_class(self, module, name):
+            if module == 'config.config':
+                for src in _CONFIG_MODULES:
+                    if hasattr(src, name):
+                        return getattr(src, name)
+                # Return a dummy class for anything not found
+                return type(name, (), {})
+            return super().find_class(module, name)
+
+    # Forward everything else to standard pickle
+    UnpicklingError = pickle.UnpicklingError
 
 
 class StandardOnlineTrainer(GFNTrainer):
@@ -35,11 +65,11 @@ class StandardOnlineTrainer(GFNTrainer):
                                 ).to(self.device)
         if self.model_cfg.gfn_ckpt_GCN is not None:
             path = self.model_cfg.gfn_ckpt_GCN
-            ckpt_load_GCN = torch.load(path)
+            ckpt_load_GCN = torch.load(path, map_location=self.device)
             self.GCN_model.load_state_dict(ckpt_load_GCN['models_state_dict'][0])
             print("GCN ckpt is specified: ", self.model_cfg.gfn_ckpt_GCN)
         else:
-            ckpt_load_GCN = torch.load(ckpt_GCN)
+            ckpt_load_GCN = torch.load(ckpt_GCN, map_location=self.device)
             self.GCN_model.load_state_dict(ckpt_load_GCN)
         
         self.src_transforms, self.tgt_transforms, self.vocab = self._preprocess()
@@ -55,11 +85,11 @@ class StandardOnlineTrainer(GFNTrainer):
                                              num_decoder_layers=num_decoder_layers, dim_feedforward=dim_ff,
                                              vocab=self.vocab, dropout=dropout_Transformer, device=self.device).to(self.device)
         if self.model_cfg.gfn_ckpt_Transformer is not None:
-            ckpt_load_Transformer = torch.load(self.model_cfg.gfn_ckpt_Transformer)
+            ckpt_load_Transformer = torch.load(self.model_cfg.gfn_ckpt_Transformer, map_location=self.device)
             self.Transformer_model.load_state_dict(ckpt_load_Transformer['models_state_dict'][0])
             print("Transformer ckpt is specified: ", self.model_cfg.gfn_ckpt_Transformer)
         else:
-            ckpt_load_Transformer = torch.load(ckpt_Transformer)
+            ckpt_load_Transformer = torch.load(ckpt_Transformer, map_location=self.device, pickle_module=_CompatPickle)
             self.Transformer_model.load_state_dict(ckpt_load_Transformer['model_state_dict'])
         
         self.MLP_model = MLP(n_in = self.cfg.cond.temperature.num_thermometer_dim,
@@ -68,7 +98,7 @@ class StandardOnlineTrainer(GFNTrainer):
                         n_layer = 2
                         )
         if self.model_cfg.gfn_ckpt_MLP is not None:
-            ckpt_load_MLP = torch.load(self.model_cfg.gfn_ckpt_MLP)
+            ckpt_load_MLP = torch.load(self.model_cfg.gfn_ckpt_MLP, map_location=self.device)
             self.MLP_model.load_state_dict(ckpt_load_MLP['models_state_dict'][0])
             print("MLP ckpt is specified: ", self.model_cfg.gfn_ckpt_MLP)
         else:
